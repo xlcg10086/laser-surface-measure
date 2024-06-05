@@ -67,8 +67,8 @@ if __name__ == "__main__":
 
     global filepath_cam
     global filepath_laser
-    filepath_cam = None
-    filepath_laser = None
+    filepath_cam = 'Calibrate/cam_imgs'
+    filepath_laser = 'Calibrate/laser_imgs'
     global ret, mtx, dist
     global camnamelist
     camnamelist = []

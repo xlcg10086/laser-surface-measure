@@ -51,7 +51,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -83,7 +83,7 @@
               <item>
                <widget class="QLineEdit" name="filepath_camimgs">
                 <property name="text">
-                 <string>Calibrate\cam_imgs</string>
+                 <string>Calibrate/cam_imgs</string>
                 </property>
                </widget>
               </item>
@@ -213,7 +213,7 @@
               <item>
                <widget class="QLineEdit" name="filepath_laserimgs">
                 <property name="text">
-                 <string>Calibrate\laser_imgs</string>
+                 <string>Calibrate/laser_imgs</string>
                 </property>
                </widget>
               </item>
@@ -467,8 +467,8 @@
            <rect>
             <x>0</x>
             <y>170</y>
-            <width>53</width>
-            <height>15</height>
+            <width>201</width>
+            <height>16</height>
            </rect>
           </property>
           <property name="text">

@@ -207,7 +207,7 @@ class Ui_MainWindow(object):
         self.bnStop.setObjectName("bnStop")
         self.gridLayout_2.addWidget(self.bnStop, 2, 1, 1, 1)
         self.path_tips = QtWidgets.QLabel(self.groupGrab)
-        self.path_tips.setGeometry(QtCore.QRect(0, 170, 53, 15))
+        self.path_tips.setGeometry(QtCore.QRect(0, 170, 201, 16))
         self.path_tips.setObjectName("path_tips")
         self.verticalLayout_4.addWidget(self.groupGrab)
         self.groupParam = QtWidgets.QGroupBox(self.sideWidget)
@@ -255,14 +255,14 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "相机校准插件"))
         self.label_8.setText(_translate("MainWindow", "图片文件夹地址："))
-        self.filepath_camimgs.setText(_translate("MainWindow", "Calibrate\\cam_imgs"))
+        self.filepath_camimgs.setText(_translate("MainWindow", "Calibrate/cam_imgs"))
         self.filepath_edit_cam.setText(_translate("MainWindow", "浏览"))
         self.label_9.setText(_translate("MainWindow", "镜头畸变校准 ："))
         self.start_cam_cali.setText(_translate("MainWindow", "开始校准"))
@@ -271,7 +271,7 @@ class Ui_MainWindow(object):
         self.output_cam_cali.setText(_translate("MainWindow", "输出"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "镜头校准"))
         self.label.setText(_translate("MainWindow", "图片文件夹地址："))
-        self.filepath_laserimgs.setText(_translate("MainWindow", "Calibrate\\laser_imgs"))
+        self.filepath_laserimgs.setText(_translate("MainWindow", "Calibrate/laser_imgs"))
         self.filepath_edit_laser.setText(_translate("MainWindow", "浏览"))
         self.label_2.setText(_translate("MainWindow", "激光刀面校准 ："))
         self.start_laser_cali.setText(_translate("MainWindow", "开始校准"))
