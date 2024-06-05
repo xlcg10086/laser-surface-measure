@@ -392,7 +392,7 @@ class CameraOperation:
         return ret
 
     # 存BMP图像
-    def Save_Bmp(self,filepath):
+    def Save_Bmp(self,filepath,name):
 
         if 0 == self.buf_save_image:
             return
@@ -400,7 +400,9 @@ class CameraOperation:
         # 获取缓存锁
         self.buf_lock.acquire()
 
-        file_path = filepath+'/'+str(self.st_frame_info.nFrameNum) + ".bmp"
+        # file_path = filepath+'/'+str(self.st_frame_info.nFrameNum) + ".bmp"
+        file_path = filepath+'/'+ name + ".bmp"
+        
         c_file_path = file_path.encode('ascii')
 
         stSaveParam = MV_SAVE_IMAGE_TO_FILE_PARAM_EX()

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>850</width>
-    <height>550</height>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -51,7 +51,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -332,18 +332,21 @@
     </item>
     <item>
      <widget class="QWidget" name="sideWidget" native="true">
-      <layout class="QVBoxLayout" name="verticalLayout_4" stretch="2,3,3">
+      <layout class="QVBoxLayout" name="verticalLayout_4" stretch="3,5,4,2">
+       <property name="spacing">
+        <number>5</number>
+       </property>
        <property name="leftMargin">
-        <number>3</number>
+        <number>0</number>
        </property>
        <property name="topMargin">
-        <number>3</number>
+        <number>0</number>
        </property>
        <property name="rightMargin">
-        <number>3</number>
+        <number>0</number>
        </property>
        <property name="bottomMargin">
-        <number>3</number>
+        <number>0</number>
        </property>
        <item>
         <widget class="QGroupBox" name="groupInit">
@@ -467,7 +470,7 @@
            <rect>
             <x>0</x>
             <y>170</y>
-            <width>201</width>
+            <width>261</width>
             <height>16</height>
            </rect>
           </property>
@@ -548,6 +551,53 @@
             <widget class="QLineEdit" name="edtFrameRate">
              <property name="text">
               <string>0</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBorad">
+         <property name="title">
+          <string>标定板</string>
+         </property>
+         <widget class="QWidget" name="gridLayoutWidget_4">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>20</y>
+            <width>201</width>
+            <height>61</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayoutborad">
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="checkborad">
+             <property name="text">
+              <string>6,9</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_10">
+             <property name="text">
+              <string>标定板尺度：</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="squaresize">
+             <property name="text">
+              <string>14.5</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_11">
+             <property name="text">
+              <string>标定板规格：</string>
              </property>
             </widget>
            </item>
