@@ -51,7 +51,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -154,14 +154,14 @@
               <item>
                <widget class="QLabel" name="label_7">
                 <property name="text">
-                 <string>校准参数输出地址：</string>
+                 <string>校准参数输出地址与名称：</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QLineEdit" name="outpath_camcail">
                 <property name="text">
-                 <string>Static/cam_calibration.json</string>
+                 <string>Static/cam_calibration.json;camerahkvs</string>
                 </property>
                </widget>
               </item>
@@ -302,14 +302,14 @@
               <item>
                <widget class="QLabel" name="label_3">
                 <property name="text">
-                 <string>校准参数输出地址：</string>
+                 <string>校准参数输出地址与名称：</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QLineEdit" name="outpath_lasercail">
                 <property name="text">
-                 <string>Static/laser_calibration.json</string>
+                 <string>Static/laser_calibration.json;camerahkvs</string>
                 </property>
                </widget>
               </item>

@@ -259,3 +259,51 @@ def SaveCamcalibrationparameters(file_path,camera_name, mtx, dist, ret):
         with open(file_path, 'w') as file:
             json.dump([calibration_params], file, indent=4)
         print(f'Calibration parameters saved to {file_path}')
+
+def SaveLasercalibrationparameters(file_path,camera_name, mtx, dist, abc, ret):
+    # 构建字典保存参数
+    calibration_params = {
+    'camera_name': camera_name,
+    'mat': mtx.tolist(),
+    'dist': dist.tolist(),
+    'abc' : abc.tolist(),
+    'Conf': ret
+    }
+
+    # 检查文件是否存在
+    if os.path.exists(file_path):
+    # 如果文件存在，加载现有数据
+        with open(file_path, 'r') as file:
+            try:
+                existing_data = json.load(file)
+                # 确保现有数据是列表格式
+                if not isinstance(existing_data, list):
+                    existing_data = []
+            except json.JSONDecodeError:
+                # 如果JSON文件损坏或为空，则创建一个空列表
+                existing_data = []
+
+        # 检查是否已存在相同名称的相机
+        existing_camera_names = [params['camera_name'] for params in existing_data]
+        if camera_name in existing_camera_names:
+            # 如果存在相同名称的相机，更新该相机的参数
+            index = existing_camera_names.index(camera_name)
+            # 可以在这里添加一个条件来检查ret值是否表示成功的校准
+            if ret < 3:  # 假设some_threshold是成功校准的最小值
+                existing_data[index] = calibration_params
+                print(f'Updated calibration parameters for {camera_name} in {file_path}')
+            else:
+                print(f'Calibration for {camera_name} was not successful enough to update.')
+        else:
+            # 如果不存在相同名称的相机，添加新的参数
+            existing_data.append(calibration_params)
+            print(f'Added calibration parameters for {camera_name} to {file_path}')
+
+        # 保存更新后的数据
+        with open(file_path, 'w') as file:
+            json.dump(existing_data, file, indent=4)
+    else:
+        # 如果文件不存在，创建新文件并保存参数
+        with open(file_path, 'w') as file:
+            json.dump([calibration_params], file, indent=4)
+        print(f'Calibration parameters saved to {file_path}')

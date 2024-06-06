@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Ui/Camcalibration.ui'
+# Form implementation generated from reading ui file './Ui/Camcalibration.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -278,7 +278,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -289,8 +289,8 @@ class Ui_MainWindow(object):
         self.filepath_edit_cam.setText(_translate("MainWindow", "浏览"))
         self.label_9.setText(_translate("MainWindow", "镜头畸变校准 ："))
         self.start_cam_cali.setText(_translate("MainWindow", "开始校准"))
-        self.label_7.setText(_translate("MainWindow", "校准参数输出地址："))
-        self.outpath_camcail.setText(_translate("MainWindow", "Static/cam_calibration.json"))
+        self.label_7.setText(_translate("MainWindow", "校准参数输出地址与名称："))
+        self.outpath_camcail.setText(_translate("MainWindow", "Static/cam_calibration.json;camerahkvs"))
         self.output_cam_cali.setText(_translate("MainWindow", "输出"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "镜头校准"))
         self.label.setText(_translate("MainWindow", "图片文件夹地址："))
@@ -298,8 +298,8 @@ class Ui_MainWindow(object):
         self.filepath_edit_laser.setText(_translate("MainWindow", "浏览"))
         self.label_2.setText(_translate("MainWindow", "激光刀面校准 ："))
         self.start_laser_cali.setText(_translate("MainWindow", "开始校准"))
-        self.label_3.setText(_translate("MainWindow", "校准参数输出地址："))
-        self.outpath_lasercail.setText(_translate("MainWindow", "Static/laser_calibration.json"))
+        self.label_3.setText(_translate("MainWindow", "校准参数输出地址与名称："))
+        self.outpath_lasercail.setText(_translate("MainWindow", "Static/laser_calibration.json;camerahkvs"))
         self.output_laser_cali.setText(_translate("MainWindow", "输出"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "刀面校准"))
         self.groupInit.setTitle(_translate("MainWindow", "初始化"))

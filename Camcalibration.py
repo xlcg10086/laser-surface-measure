@@ -8,8 +8,8 @@ import ctypes
 import cv2
 import numpy as np
 import glob
-from Operateparadata import SaveCamcalibrationparameters
-
+from Operateparadata import SaveCamcalibrationparameters,SaveLasercalibrationparameters
+from numpy.linalg import lstsq
 
 # 获取选取设备信息的索引，通过[]之间的字符去解析
 def TxtWrapBy(start_str, end, all):
@@ -108,9 +108,7 @@ if __name__ == "__main__":
     global filepath_laser
     filepath_cam = 'Calibrate/cam_imgs'
     filepath_laser = 'Calibrate/laser_imgs'
-    global ret, mtx, dist
-    global camnamelist
-    camnamelist = []
+    global ret, mtx, dist,abc
     laserimgs_path_generator = imgs_save_path_generator()
     imgname_generator = imgs_name_generator()
     global imgname
@@ -133,7 +131,6 @@ if __name__ == "__main__":
     def enum_devices():
         global deviceList
         global obj_cam_operation
-        global camnamelist
 
         deviceList = MV_CC_DEVICE_INFO_LIST()
         ret = MvCamera.MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, deviceList)
@@ -156,7 +153,6 @@ if __name__ == "__main__":
                 model_name = decoding_char(mvcc_dev_info.SpecialInfo.stGigEInfo.chModelName)
                 print("device user define name: " + user_defined_name)
                 print("device model name: " + model_name)
-                camnamelist.append(model_name)
 
                 nip1 = ((mvcc_dev_info.SpecialInfo.stGigEInfo.nCurrentIp & 0xff000000) >> 24)
                 nip2 = ((mvcc_dev_info.SpecialInfo.stGigEInfo.nCurrentIp & 0x00ff0000) >> 16)
@@ -172,7 +168,7 @@ if __name__ == "__main__":
                 model_name = decoding_char(mvcc_dev_info.SpecialInfo.stUsb3VInfo.chModelName)
                 print("device user define name: " + user_defined_name)
                 print("device model name: " + model_name)
-                camnamelist.append(model_name)
+            
 
                 strSerialNumber = ""
                 for per in mvcc_dev_info.SpecialInfo.stUsb3VInfo.chSerialNumber:
@@ -408,9 +404,10 @@ if __name__ == "__main__":
         print("rvecs:\n", rvecs) # 旋转向量 # 外参数
         print("tvecs:\n", tvecs[0] ) # 平移向量 # 外参数
         print("-----------------------------------------------------")
+        ui.output_cam_cali.setEnabled(True)
 
     def Calibration_laser():
-        # global ret, mtx, dist
+        global ret, mtx, dist,abc
         # 添加一个列表记录一下成功标定的图片标号
         index_list = []
         #设定参数
@@ -478,6 +475,11 @@ if __name__ == "__main__":
             # 对灰度图像应用阈值处理，将灰度值低于阈值的像素设置为0，高于阈值的保持不变
             ret, binary_image = cv2.threshold(gray, 100, 255, cv2.THRESH_TOZERO)
 
+            img = cv2.resize(binary_image, None, fx=0.25, fy=0.25)
+            cv2.imshow('img', img)
+            cv2.waitKey(20)
+            ui.probar_lasercali.setValue(50+int(index*30/numofimages))
+
             laser_line = []  # 初始化一个列表来存储当前图像的激光线坐标
             # 遍历列的范围，寻找激光线的y坐标
             for x in range(col_0, col_1):
@@ -490,46 +492,61 @@ if __name__ == "__main__":
                     laser_line.append([x, y])  # 将坐标添加到激光线列表中
 
             laser_lines.append(laser_line)  # 将当前图像的激光线坐标添加到总列表中
-        
+        cv2.destroyAllWindows()
+        ui.probar_lasercali.setValue(80)
+
         #第三步坐标转化 像素坐标系->相机坐标系
         transed_locs = []
+        # 遍历提供的索引列表中的每个索引
         for index in index_list:
-            linel = laser_lines[index]
-            line =  np.array(linel)
-            ones_column = np.ones((line.shape[0], 1))  # 创建全为1的列
-            line = np.hstack((line, ones_column))
-            print(line.shape)
-            Rc = rvecs[index]
-            Tc = tvecs[index]
-            # print((Rc.T,Tc))
+            linel = laser_lines[index]  # 获取当前索引处的激光线
+            line = np.array(linel)  # 将激光线转换为NumPy数组
+            ones_column = np.ones((line.shape[0], 1))  # 创建一个全为1的列
+            line = np.hstack((line, ones_column))  # 将全1列添加到线数组中
+
+            Rc = rvecs[index]  # 当前索引的旋转向量
+            Rm, _ = cv2.Rodrigues(Rc)  # 将旋转向量转换为旋转矩阵
+            Tc = tvecs[index]  # 当前索引的平移向量
+
+            # 使用laser_trans函数转换线中的每个点
             for point in line:
-                loc = laser_trans(point,mtx,Rc.T,Tc)
-                transed_locs.append(loc)
+                loc = laser_trans(point, mtx, Rm.T, Tc)  # 应用转换
+                transed_locs.append(loc)  # 将转换后的位置添加到列表中
 
-        np.savetxt('transed_locs.txt', transed_locs, delimiter=',')
+            # 在UI中更新进度条
+            ui.probar_lasercali.setValue(80 + int(index * 20 / numofimages))
 
-        
-
-
-
-
-
-            # print(np.array(img_points[index]).shape)
-            # print(img_points[index][:,:,0])
-        #     img = cv2.resize(img, None, fx=0.25, fy=0.25)
-        #     cv2.imshow('img', img)
-        #     cv2.waitKey(20)
-        #     ui.probar_camcali.setValue(int(index*50/numofimages))
-        #     print(len(img_points))
-        # cv2.destroyAllWindows()
-
+        # 将转换后的位置列表转换为NumPy数组，并选择第一个切片
+        transed_locs = np.array(transed_locs)[:, :, 0]
+        # 从转换后的位置中提取X，Y，Z坐标
+        loc_X = transed_locs[:, 0].T
+        loc_Y = transed_locs[:, 1].T
+        loc_Z = transed_locs[:, 2].T
+        # 将坐标与一列1堆叠起来
+        xyz = np.column_stack((np.ones(len(loc_X)), loc_X, loc_Y))
+        # 打印loc_X和xyz的形状以进行调试
+        print(f'locx{loc_X.shape}xyz{xyz.shape}')
+        # 执行最小二乘拟合以找到平面方程参数
+        para, _, _, _ = lstsq(xyz, loc_Z, rcond=None)
+        # 打印激光平面的方程
+        print(f'激光刀面的方程为：z={para[1]}x+{para[2]}y+{para[0]}')
+        abc = [para[1],para[2],para[0]]
+        # 将UI中的进度条设置为100（完成）
+        ui.probar_lasercali.setValue(100)
+        ui.output_laser_cali.setEnabled(True)
 
 
     # 保存数据
     def Savecamcailparameter():
-        filepath_output = ui.outpath_camcail.text()
-        camname = camnamelist[ui.ComboDevices.currentIndex()]
+        str = ui.outpath_camcail.text()
+        filepath_output,camname = str.split(";")
         SaveCamcalibrationparameters(filepath_output,camname,mtx,dist,ret)
+
+    # 保存数据
+    def Savelasercailparameter():
+        str = ui.outpath_lasercail.text()
+        filepath_output,camname = str.split(";")
+        SaveLasercalibrationparameters(filepath_output,camname,mtx,dist,ret)
         
     
 
@@ -580,6 +597,8 @@ if __name__ == "__main__":
 
 
     ui.tabWidget.setCurrentIndex(0)
+    ui.output_cam_cali.setEnabled(False)
+    ui.output_laser_cali.setEnabled(False)
 
     mainWindow.show()
 
