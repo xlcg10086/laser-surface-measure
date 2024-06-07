@@ -266,7 +266,7 @@ def SaveLasercalibrationparameters(file_path,camera_name, mtx, dist, abc, ret):
     'camera_name': camera_name,
     'mat': mtx.tolist(),
     'dist': dist.tolist(),
-    'abc' : abc.tolist(),
+    'abc' : abc,
     'Conf': ret
     }
 

@@ -473,7 +473,7 @@ if __name__ == "__main__":
             print((col_0, col_1))  # 打印列的范围
 
             # 对灰度图像应用阈值处理，将灰度值低于阈值的像素设置为0，高于阈值的保持不变
-            ret, binary_image = cv2.threshold(gray, 100, 255, cv2.THRESH_TOZERO)
+            _, binary_image = cv2.threshold(gray, 100, 255, cv2.THRESH_TOZERO)
 
             img = cv2.resize(binary_image, None, fx=0.25, fy=0.25)
             cv2.imshow('img', img)
@@ -546,7 +546,7 @@ if __name__ == "__main__":
     def Savelasercailparameter():
         str = ui.outpath_lasercail.text()
         filepath_output,camname = str.split(";")
-        SaveLasercalibrationparameters(filepath_output,camname,mtx,dist,ret)
+        SaveLasercalibrationparameters(filepath_output,camname,mtx,dist,abc,ret)
         
     
 
@@ -593,6 +593,7 @@ if __name__ == "__main__":
     ui.filepath_edit_laser.clicked.connect(openDirectoryDialog)
     ui.start_cam_cali.clicked.connect(Calibration_cam)
     ui.output_cam_cali.clicked.connect(Savecamcailparameter)
+    ui.output_laser_cali.clicked.connect(Savelasercailparameter)
     ui.start_laser_cali.clicked.connect(Calibration_laser)
 
 
