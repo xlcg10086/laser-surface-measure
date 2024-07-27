@@ -11,8 +11,8 @@ import ctypes
 import random
 from ctypes import *
 import cv2
-
 from Mvlib import *
+import Lib.Calculation as cal
 
 # 强制关闭线程
 def Async_raise(tid, exctype):
@@ -107,8 +107,6 @@ def get_Roi(image, stpoint,endpoint):
     return newimg
 
 
-
-
 # 相机操作类
 class CameraOperation:
 
@@ -116,7 +114,7 @@ class CameraOperation:
                  h_thread_handle=None,
                  b_thread_closed=False, st_frame_info=None, b_exit=False, b_save_bmp=False, b_save_jpg=False,
                  buf_save_image=None,
-                 n_save_image_size=0, n_win_gui_id=0, frame_rate=0, exposure_time=0, gain=0, mat = None):
+                 n_save_image_size=0, n_win_gui_id=0, frame_rate=0, exposure_time=0, gain=0, mat = None ):
 
         self.obj_cam = obj_cam
         self.st_device_list = st_device_list
@@ -137,6 +135,11 @@ class CameraOperation:
         self.gain = gain
         self.buf_lock = threading.Lock()  # 取图和存图的buffer锁
         self.mat = mat
+        self.is_graph_process = False
+        self.mtx = None
+        self.dist = None
+        self.abc = None
+        self.lines_cloud = []
 
     # 打开相机
     def Open_device(self):
@@ -295,12 +298,18 @@ class CameraOperation:
             print('show info', 'please type in the text box !')
             return MV_E_PARAMETER
         if self.b_open_device:
-            ret = self.obj_cam.MV_CC_SetEnumValue("ExposureAuto", 0)
-            time.sleep(0.2)
-            ret = self.obj_cam.MV_CC_SetFloatValue("ExposureTime", float(exposureTime))
-            if ret != 0:
-                print('show error', 'set exposure time fail! ret = ' + To_hex_str(ret))
-                return ret
+            if '-1' == exposureTime:
+                ret = self.obj_cam.MV_CC_SetEnumValue("ExposureAuto", 1)
+                if ret != 0:
+                    print('show error', 'set exposure time fail! ret = ' + To_hex_str(ret))
+                    return ret
+            else:
+                ret = self.obj_cam.MV_CC_SetEnumValue("ExposureAuto", 0)
+                time.sleep(0.2)
+                ret = self.obj_cam.MV_CC_SetFloatValue("ExposureTime", float(exposureTime))
+                if ret != 0:
+                    print('show error', 'set exposure time fail! ret = ' + To_hex_str(ret))
+                    return ret
 
             ret = self.obj_cam.MV_CC_SetFloatValue("Gain", float(gain))
             if ret != 0:
@@ -311,75 +320,128 @@ class CameraOperation:
             if ret != 0:
                 print('show error', 'set acquistion frame rate fail! ret = ' + To_hex_str(ret))
                 return ret
-
+            time.sleep(0.1)
             print('show info', 'set parameter success!')
 
             return MV_OK
 
+    def Set_mtx(self,mtx):
+        self.mtx = np.array(mtx)
+
+    def Set_abc(self,abc):
+        self.abc = np.array(abc)
+
+    def Set_dist(self,dist):
+        self.dist = np.array(dist)
+
     # 取图线程函数
     def Work_thread(self, winHandle):
-        stOutFrame = MV_FRAME_OUT()
-        memset(byref(stOutFrame), 0, sizeof(stOutFrame))
+        stOutFrame = MV_FRAME_OUT()  # 创建一个MV_FRAME_OUT结构体对象，用于接收相机图像帧数据
+        memset(byref(stOutFrame), 0, sizeof(stOutFrame))  # 初始化stOutFrame对象的内存为0
 
         while True:
-            ret = self.obj_cam.MV_CC_GetImageBuffer(stOutFrame, 1000)
-            if 0 == ret:
+            ret = self.obj_cam.MV_CC_GetImageBuffer(stOutFrame, 1000)  # 从相机获取图像缓冲区数据
+            if 0 == ret:  # 如果成功获取图像数据
                 # 拷贝图像和图像信息
-                if self.buf_save_image is None:
-                    self.buf_save_image = (c_ubyte * stOutFrame.stFrameInfo.nFrameLen)()         
-                
-                self.st_frame_info = stOutFrame.stFrameInfo
+                if self.buf_save_image is None:  # 如果图像缓存为空
+                    self.buf_save_image = (c_ubyte * stOutFrame.stFrameInfo.nFrameLen)()  # 创建一个大小为图像帧长度的字节数组作为图像缓存
+
+                self.st_frame_info = stOutFrame.stFrameInfo  # 将获取的图像信息保存到self.st_frame_info中
 
                 # 获取缓存锁
-                self.buf_lock.acquire()
-                cdll.msvcrt.memcpy(byref(self.buf_save_image), stOutFrame.pBufAddr, self.st_frame_info.nFrameLen)
-                self.buf_lock.release()
+                self.buf_lock.acquire()  # 获取缓存锁，确保线程安全
+                cdll.msvcrt.memcpy(byref(self.buf_save_image), stOutFrame.pBufAddr, self.st_frame_info.nFrameLen)  # 将图像数据拷贝到图像缓存中
+                self.buf_lock.release()  # 释放缓存锁
 
                 # 图像处理部分
-                oriimage = Mono_numpy(self.buf_save_image,self.st_frame_info.nWidth, self.st_frame_info.nHeight)
-                
-                roiimage = get_Roi(oriimage,(700,500),(4800,3000))
-                
-                # cv2.imwrite('output.jpg', roiimage)
+                if self.is_graph_process:  # 如果启用了图像处理
+                    # 将图像转换为灰度图像
+                    oriimage = Mono_numpy(self.buf_save_image, self.st_frame_info.nWidth, self.st_frame_info.nHeight)
 
-                height,width = roiimage.shape
+                    # 对图像进行畸变校正
+                    undist_image = cv2.undistort(oriimage, self.mtx, self.dist)
 
-                roiimage_buf = roiimage.flatten()
-                # 获取roiimage_buf的指针
-                roiimage_buf_ptr = roiimage_buf.ctypes.data_as(ctypes.POINTER(ctypes.c_ubyte))
-                
+                    # 对灰度图像应用阈值处理，将灰度值低于阈值的像素设置为0，高于阈值的保持不变
+                    _, binary_image = cv2.threshold(undist_image, 100, 255, cv2.THRESH_TOZERO)
+
+                    # 求解激光线
+                    # 求每行的和
+                    row_sums = np.sum(binary_image, axis=1)
+
+                    # 找到开始为0的索引
+                    start_index_row = np.where(row_sums != 0)[0][0] - 50 if np.where(row_sums != 0)[0][0] - 50 > 0 else 0
+
+                    # 找到最后为0的索引
+                    end_index_row = np.where(row_sums != 0)[0][-1] + 50 if np.where(row_sums != 0)[0][-1] - 50 < 3600 else 3600
+
+                    col_sums = np.sum(binary_image[start_index_row:end_index_row, :], axis=0)
+
+                    # 找到开始为0的索引
+                    start_index_col = np.where(col_sums != 0)[0][0]
+
+                    # 找到最后为0的索引
+                    end_index_col = np.where(col_sums != 0)[0][-1]
+                    # 取出roi区域
+                    roiimage = binary_image[start_index_row:end_index_row, start_index_col:end_index_col]
+
+                    # 对选中区域进行列扫描
+                    col_sums_roi = np.sum(roiimage, axis=0)
+                    col_sums_nonzero = np.where(col_sums_roi == 0, -1, col_sums_roi)
+                    col_sums_weight = np.dot(np.arange(roiimage.shape[0]), roiimage)
+                    # 计算出激光线y坐标
+                    col_center_line = np.round(col_sums_weight / col_sums_nonzero)
+                    # 为激光线添加x坐标
+                    col_center_line = np.stack((np.arange(col_center_line.shape[0]), col_center_line)).T
+                    # 修正激光线坐标位置
+                    col_center_line = col_center_line + [start_index_col, start_index_row]
+
+                    # 坐标转化 像素坐标系->相机坐标系
+                    pointcloud = []
+                    # 获取矩阵内参数，寻找直线参数
+                    Fp = (self.mtx[0, 0] + self.mtx[1, 1]) / 2
+                    center_x = self.mtx[0, 2]
+                    center_y = self.mtx[1, 2]
+
+                    for pointp in col_center_line:
+                        if pointp[1] > start_index_row:  # 点的纵坐标大于起始行索引，也就是之前数值为0的列被替换为了-1，故不转换
+                            # 计算相机坐标系中的点坐标
+                            pointcloud.append(cal.Findintersection(self.abc[0], self.abc[1], self.abc[2], pointp[0] - center_x, pointp[1] - center_y, Fp))
+
+                    # 获取缓存锁
+                    self.buf_lock.acquire()  # 获取缓存锁，确保线程安全
+                    self.lines_cloud = np.array(pointcloud)  # 将计算得到的点云数据保存到self.lines_cloud中
+                    self.buf_lock.release()  # 释放缓存锁
+
                 print("get one frame: Width[%d], Height[%d], nFrameNum[%d]"
-                      % (self.st_frame_info.nWidth, self.st_frame_info.nHeight, self.st_frame_info.nFrameNum))
+                    % (self.st_frame_info.nWidth, self.st_frame_info.nHeight, self.st_frame_info.nFrameNum))
                 # 释放缓存
-                self.obj_cam.MV_CC_FreeImageBuffer(stOutFrame)
+                self.obj_cam.MV_CC_FreeImageBuffer(stOutFrame)  # 释放图像缓冲区
+
             else:
-                print("no data, ret = " + To_hex_str(ret))
+                print("no data, ret = " + To_hex_str(ret))  # 打印无数据的提示信息
                 continue
 
             # 使用Display接口显示图像
             stDisplayParam = MV_DISPLAY_FRAME_INFO()
             memset(byref(stDisplayParam), 0, sizeof(stDisplayParam))
-            stDisplayParam.hWnd = int(winHandle)
-            stDisplayParam.nWidth = self.st_frame_info.nWidth
-            stDisplayParam.nHeight = self.st_frame_info.nHeight
-            # print(self.st_frame_info.nWidth)
-            # print(self.st_frame_info.nHeight)
-            stDisplayParam.nWidth = width
-            stDisplayParam.nHeight = height
-            stDisplayParam.enPixelType = self.st_frame_info.enPixelType
-            # stDisplayParam.pData = self.buf_save_image
-            stDisplayParam.pData = roiimage_buf_ptr
-            # stDisplayParam.nDataLen = self.st_frame_info.nFrameLen
-            stDisplayParam.nDataLen = width*height
-            # print(self.buf_save_image)
-            # print(self.st_frame_info.nFrameLen)
-            self.obj_cam.MV_CC_DisplayOneFrame(stDisplayParam)
+            stDisplayParam.hWnd = int(winHandle)  # 窗口句柄
+            stDisplayParam.nWidth = self.st_frame_info.nWidth  # 图像宽度
+            stDisplayParam.nHeight = self.st_frame_info.nHeight  # 图像高度
+            stDisplayParam.enPixelType = self.st_frame_info.enPixelType  # 像素类型
+            stDisplayParam.pData = self.buf_save_image  # 图像数据
+            stDisplayParam.nDataLen = self.st_frame_info.nFrameLen  # 图像数据长度
+            self.obj_cam.MV_CC_DisplayOneFrame(stDisplayParam)  # 显示图像
 
             # 是否退出
-            if self.b_exit:
+            if self.b_exit:  # 如果需要退出程序
                 if self.buf_save_image is not None:
-                    del self.buf_save_image
-                break
+                    del self.buf_save_image  # 删除图像缓存
+                break  # 退出循环，结束线程的执行
+
+
+    # 寻找曲线
+    def Get_line_cloud(self):
+        return self.line_cloud
 
     # 存jpg图像
     def Save_jpg(self):
@@ -434,4 +496,3 @@ class CameraOperation:
         self.buf_lock.release()
 
         return ret
-
