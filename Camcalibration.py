@@ -8,7 +8,7 @@ import ctypes
 import cv2
 import numpy as np
 import glob
-from Operateparadata import SaveCamcalibrationparameters,SaveLasercalibrationparameters
+from Lib.Operateparadata import SaveCamcalibrationparameters,SaveLasercalibrationparameters
 from numpy.linalg import lstsq
 
 # 获取选取设备信息的索引，通过[]之间的字符去解析
@@ -70,7 +70,7 @@ def laser_trans(p, inter, Rc_1, Tc_1):
 
     # 求伪逆
     t = np.linalg.pinv(Rc_1)
-    print(t)
+    # print(t)
     a = t[2, 0]
     b = t[2, 1]
     c = t[2, 2]
@@ -468,12 +468,12 @@ if __name__ == "__main__":
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # 将图像转换为灰度图
 
             # 计算用于分析激光线的列的范围
-            col_0 = int((corner_range[1] - corner_range[0]) * 1/3 + corner_range[0])
-            col_1 = int((corner_range[1] - corner_range[0]) * 2/3 + corner_range[0])
+            col_0 = int((corner_range[1] - corner_range[0]) * 1/10 + corner_range[0])
+            col_1 = int((corner_range[1] - corner_range[0]) * 9/10 + corner_range[0])
             print((col_0, col_1))  # 打印列的范围
 
             # 对灰度图像应用阈值处理，将灰度值低于阈值的像素设置为0，高于阈值的保持不变
-            _, binary_image = cv2.threshold(gray, 100, 255, cv2.THRESH_TOZERO)
+            _, binary_image = cv2.threshold(gray, 50, 255, cv2.THRESH_TOZERO)
 
             img = cv2.resize(binary_image, None, fx=0.25, fy=0.25)
             cv2.imshow('img', img)
@@ -510,8 +510,15 @@ if __name__ == "__main__":
 
             # 使用laser_trans函数转换线中的每个点
             for point in line:
-                loc = laser_trans(point, mtx, Rm.T, Tc)  # 应用转换
+                loc = laser_trans(point, mtx, Rm, Tc)  # 应用转换
                 transed_locs.append(loc)  # 将转换后的位置添加到列表中
+
+            file = open("lines.txt", "a")
+            # 添加内容到文件末尾
+            content = f'{laser_trans(line[0], mtx, Rm, Tc)}\n {laser_trans(line[-1], mtx, Rm, Tc)}\n'
+            file.write(content)
+            # 关闭文件
+            file.close()
 
             # 在UI中更新进度条
             ui.probar_lasercali.setValue(80 + int(index * 20 / numofimages))
@@ -522,6 +529,15 @@ if __name__ == "__main__":
         loc_X = transed_locs[:, 0].T
         loc_Y = transed_locs[:, 1].T
         loc_Z = transed_locs[:, 2].T
+        # print(loc_X.shape)
+        # file = open("lines.txt", "a")
+        # # 添加内容到文件末尾
+        # for index in range(loc_X.shape[0]):
+        #     content = f'{loc_X[index]} {loc_Y[index]} {loc_Z[index]}\n'
+        #     file.write(content)
+        # # 关闭文件
+        # file.close()
+
         # 将坐标与一列1堆叠起来
         xyz = np.column_stack((np.ones(len(loc_X)), loc_X, loc_Y))
         # 打印loc_X和xyz的形状以进行调试

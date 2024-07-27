@@ -307,3 +307,54 @@ def SaveLasercalibrationparameters(file_path,camera_name, mtx, dist, abc, ret):
         with open(file_path, 'w') as file:
             json.dump([calibration_params], file, indent=4)
         print(f'Calibration parameters saved to {file_path}')
+
+
+def ReadLasercalibrationparameters(filepath ='data/laser_calibration.json'):
+    """
+    读取激光面设置文件，获取激光面文件列表。
+
+    参数:
+    filepath (str): 相机设置文件的文件名，不包含后缀名。
+
+    返回:
+    list: 包含激光面参数的列表，每个激光面有4个key laser_name,A,B,C。
+    """
+    if os.path.exists(filepath):
+        with open(f'./{filepath}', 'r') as file:
+            data_list = json.load(file)
+
+        if len(data_list) == 0:
+            print('error: no data') 
+            return None
+
+        laser_surface_para_list = data_list
+
+        return laser_surface_para_list
+    else:
+        print('error: no such file') 
+        return None
+    
+def ReadCamcalibrationparameters(filepath ='data/cam_calibration.json'):
+    """
+    读取激光面设置文件，获取激光面文件列表。
+
+    参数:
+    filepath (str): 相机设置文件的文件名，不包含后缀名。
+
+    返回:
+    list: 包含相机参数的列表，每个激光面有4个key
+    """
+    if os.path.exists(filepath):
+        with open(f'./{filepath}', 'r') as file:
+            data_list = json.load(file)
+
+        if len(data_list) == 0:
+            print('error: no data') 
+            return None
+
+        cam_cail_para_list = data_list
+
+        return cam_cail_para_list
+    else:
+        print('error: no such file') 
+        return None
